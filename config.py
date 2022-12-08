@@ -26,6 +26,27 @@ swimming_event_id = {
     "400 Free": 5,
     "800 Free": 6,
     "1500 Free": 8,
+    "50 Back": 9,
+    "100 Back": 10,
+    "200 Back": 11,
+    "50 Brest": 12,
+    "100 Brest": 13,
+    "200 Brest": 14,
+    "50 Fly": 15,
+    "100 Fly": 16,
+    "200 Fly": 17,
+    "200 IM": 18,
+    "400 IM": 19,
+    "200 Free Relay": 24,
+    "400 Free Relay": 27,
+    "800 Free Relay": 29,
+    "200 Medley Relay": 39,
+    "400 Medley Relay": 40,
+}
+
+gender = {
+    1: "Mens",
+    2: "Womens",
 }
 
 oua_points = {

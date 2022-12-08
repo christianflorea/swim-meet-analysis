@@ -1,4 +1,6 @@
 import requests
+import random
+from time import sleep
 from bs4 import BeautifulSoup
 import pandas as pd
 import string
@@ -54,14 +56,23 @@ class SwimRankingComms:
         return result
 
     def get_team_points_by_event(self) -> dict:
+        rdm = random.randint(3, 8)
         teams_in_meet = self.get_team_names()
         result = {team: [0, 0, 0] for team in teams_in_meet}
-        for gender in range(1, 3):
-            # print(f"gender: {gender}")
-            for id in config.swimming_event_id.values():
-                # print(f"id: {id}")
+        for gender_id in range(1, 3):
+            print(f"gender: {config.gender[gender_id]}")
+            for event, id in config.swimming_event_id.items():
+                # if id != 24:
+                #     continue
+                if id > 20:
+                    points_mult = 2
+                else:
+                    continue
+                    points_mult = 1
+                print(f"id: {id} - {event}")
+                sleep(rdm)
                 page = requests.get(
-                    f"https://www.swimrankings.net/index.php?page=meetDetail&meetId={self.meet_id}&gender={gender}&styleId={id}")
+                    f"https://www.swimrankings.net/index.php?page=meetDetail&meetId={self.meet_id}&gender={gender_id}&styleId={id}")
                 soup = BeautifulSoup(page.content, 'html.parser')
                 event_results = soup.find("table").find(class_="meetResult0")
                 if event_results != None:
@@ -69,9 +80,14 @@ class SwimRankingComms:
                 else:
                     continue
                 if "Split" in event_results[::7]:
-                    print("SPLIT")
+                    # print("SPLIT")
                     continue
-                teams_in_event = event_results[4::7]
+                if points_mult == 2:
+                    # print(event_results)
+                    teams_in_event = event_results[1::12]
+                else:
+                    teams_in_event = event_results[4::7]
+                # print(teams_in_event)
                 place = 0
                 for team in teams_in_event:
                     place += 1
@@ -79,51 +95,53 @@ class SwimRankingComms:
                         if place in config.oua_points.keys():
                             # print(
                             #     f"Adding {config.oua_points[place]} points to {team}")
-                            result[team][0] += config.oua_points[place]
-                            result[team][gender] += config.oua_points[place]
+                            result[team][0] += (points_mult *
+                                                config.oua_points[place])
+                            result[team][gender_id] += (points_mult *
+                                                        config.oua_points[place])
         return result
 
 
-page = requests.get(
-    "https://www.swimrankings.net/index.php?page=meetDetail&meetId=634465&gender=1&styleId=17")
-soup = BeautifulSoup(page.content, 'html.parser')
-result_header = soup.find(class_="meetResultHead")
+# page = requests.get(
+#     "https://www.swimrankings.net/index.php?page=meetDetail&meetId=634465&gender=1&styleId=17")
+# soup = BeautifulSoup(page.content, 'html.parser')
+# result_header = soup.find(class_="meetResultHead")
 
-event_name = result_header.find(class_="event").get_text()
+# event_name = result_header.find(class_="event").get_text()
 
-results = []
-line = {"place": "", "name": "", "team": ""}
-translator = str.maketrans("", "", string.punctuation)
+# results = []
+# line = {"place": "", "name": "", "team": ""}
+# translator = str.maketrans("", "", string.punctuation)
 
-event0 = soup.find("table").find(class_="meetResult0")
-iterator = 0
-for element in event0.next_elements:
-    if str(element)[0] == " ":
-        element = element[1:]
-    if str(element)[0] == "<":
-        continue
-    iterator += 1
-    if str(element)[:9] == "GENERATED":
-        break
-    element = element.translate(translator)
-    if iterator % 7 == 1:
-        line["place"] = element
-        # print(f"Rank = {element}")
-    elif iterator % 7 == 2:
-        line["name"] = element
-        # print(f"Name = {element}")
-    elif iterator % 7 == 5:
-        line["team"] = element
-        # print(f"Team = {element}")
-    elif iterator % 7 == 0:
-        results.append(line)
-        # print(line)
-        line = {"place": "", "name": "", "team": ""}
-    else:
-        continue
+# event0 = soup.find("table").find(class_="meetResult0")
+# iterator = 0
+# for element in event0.next_elements:
+#     if str(element)[0] == " ":
+#         element = element[1:]
+#     if str(element)[0] == "<":
+#         continue
+#     iterator += 1
+#     if str(element)[:9] == "GENERATED":
+#         break
+#     element = element.translate(translator)
+#     if iterator % 7 == 1:
+#         line["place"] = element
+#         # print(f"Rank = {element}")
+#     elif iterator % 7 == 2:
+#         line["name"] = element
+#         # print(f"Name = {element}")
+#     elif iterator % 7 == 5:
+#         line["team"] = element
+#         # print(f"Team = {element}")
+#     elif iterator % 7 == 0:
+#         results.append(line)
+#         # print(line)
+#         line = {"place": "", "name": "", "team": ""}
+#     else:
+#         continue
 
-for result in results:
-    pass
+# for result in results:
+#     pass
     # print(result)
 
     # event0 = soup.find_all(class_="meetResult0")
@@ -152,5 +170,4 @@ for result in results:
 
 if __name__ == "__main__":
     oua = SwimRankingComms(meet_id="629800")
-    print(oua.get_team_names())
     print(oua.get_team_points_by_event())
