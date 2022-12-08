@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import string
 import config
+import database
 
 
 class SwimRankingComms:
@@ -56,18 +57,17 @@ class SwimRankingComms:
         return result
 
     def get_team_points_by_event(self) -> dict:
-        rdm = random.randint(3, 8)
+        rdm = random.randint(3, 11)
         teams_in_meet = self.get_team_names()
         result = {team: [0, 0, 0] for team in teams_in_meet}
         for gender_id in range(1, 3):
             print(f"gender: {config.gender[gender_id]}")
             for event, id in config.swimming_event_id.items():
-                # if id != 24:
+                # if id != 29:
                 #     continue
                 if id > 20:
                     points_mult = 2
                 else:
-                    continue
                     points_mult = 1
                 print(f"id: {id} - {event}")
                 sleep(rdm)
@@ -170,4 +170,5 @@ class SwimRankingComms:
 
 if __name__ == "__main__":
     oua = SwimRankingComms(meet_id="629800")
-    print(oua.get_team_points_by_event())
+    divs = SwimRankingComms(meet_id="634465")
+    print(divs.get_team_points_by_event())

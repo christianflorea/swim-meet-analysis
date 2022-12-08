@@ -45,8 +45,8 @@ swimming_event_id = {
 }
 
 gender = {
-    1: "Mens",
-    2: "Womens",
+    1: "Men",
+    2: "Women",
 }
 
 oua_points = {
