@@ -57,13 +57,13 @@ class SwimRankingComms:
         return result
 
     def get_team_points_by_event(self) -> dict:
-        rdm = random.randint(3, 11)
+        rdm = round(random.uniform(1.50, 4.00), 2)
         teams_in_meet = self.get_team_names()
         result = {team: [0, 0, 0] for team in teams_in_meet}
         for gender_id in range(1, 3):
             print(f"gender: {config.gender[gender_id]}")
             for event, id in config.swimming_event_id.items():
-                # if id != 29:
+                # if id != 15:
                 #     continue
                 if id > 20:
                     points_mult = 2
@@ -79,26 +79,39 @@ class SwimRankingComms:
                     event_results = self.reformat_soup(event_results)
                 else:
                     continue
+                result_lines = zip(*(iter(event_results),) * 7)
                 if "Split" in event_results[::7]:
                     # print("SPLIT")
                     continue
                 if points_mult == 2:
                     # print(event_results)
-                    teams_in_event = event_results[1::12]
+                    result_lines = zip(*(iter(event_results),) * 12)
+                    team_index = 1
                 else:
-                    teams_in_event = event_results[4::7]
+                    result_lines = zip(*(iter(event_results),) * 7)
+                    team_index = 4
                 # print(teams_in_event)
-                place = 0
-                for team in teams_in_event:
-                    place += 1
-                    if team in teams_in_meet:
-                        if place in config.oua_points.keys():
-                            # print(
-                            #     f"Adding {config.oua_points[place]} points to {team}")
-                            result[team][0] += (points_mult *
-                                                config.oua_points[place])
-                            result[team][gender_id] += (points_mult *
-                                                        config.oua_points[place])
+                for line in result_lines:
+                    # print(line)
+                    # print(line[team_index])
+                    if line[team_index] in teams_in_meet:
+                        try:
+                            int(line[0])
+                        except:
+                            pass
+                            # print(f"Cannot turn {line[0]} into int")
+                        else:
+                            if int(line[0]) in config.oua_points.keys():
+                                points = config.oua_points[int(line[0])]
+                                print(
+                                    f"Adding {points} points to {line[team_index]} for place {line[0]} and time {line[-2]}")
+                                result[line[team_index]][0] += (points_mult *
+                                                                points)
+                                result[line[team_index]][gender_id] += (points_mult *
+                                                                        points)
+                    else:
+                        pass
+                        # print("placing not in dict")
         return result
 
 
@@ -171,4 +184,5 @@ class SwimRankingComms:
 if __name__ == "__main__":
     oua = SwimRankingComms(meet_id="629800")
     divs = SwimRankingComms(meet_id="634465")
+    print(divs.get_team_names())
     print(divs.get_team_points_by_event())
