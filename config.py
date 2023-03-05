@@ -29,9 +29,9 @@ swimming_event_id = {
     "50 Back": 9,
     "100 Back": 10,
     "200 Back": 11,
-    "50 Brest": 12,
-    "100 Brest": 13,
-    "200 Brest": 14,
+    "50 Breast": 12,
+    "100 Breast": 13,
+    "200 Breast": 14,
     "50 Fly": 15,
     "100 Fly": 16,
     "200 Fly": 17,
@@ -42,6 +42,14 @@ swimming_event_id = {
     "800 Free Relay": 29,
     "200 Medley Relay": 39,
     "400 Medley Relay": 40,
+}
+
+relay_events = {
+    "200 Free Relay",
+    "400 Free Relay",
+    "800 Free Relay",
+    "200 Medley Relay",
+    "400 Medley Relay",
 }
 
 gender = {
@@ -66,4 +74,32 @@ oua_points = {
     14: 3,
     15: 2,
     16: 1
+}
+
+
+usports_points = {
+    1: 32,
+    2: 28,
+    3: 27,
+    4: 26,
+    5: 25,
+    6: 24,
+    7: 23,
+    8: 22,
+    9: 20,
+    10: 17,
+    11: 16,
+    12: 15,
+    13: 14,
+    14: 13,
+    15: 12,
+    16: 11,
+    17: 9,
+    18: 7,
+    19: 6,
+    20: 5,
+    21: 4,
+    22: 3,
+    23: 2,
+    24: 1
 }
