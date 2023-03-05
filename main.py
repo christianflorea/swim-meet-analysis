@@ -1,188 +1,230 @@
 import requests
 import random
+import re
+from datetime import datetime
 from time import sleep
 from bs4 import BeautifulSoup
+from tabulate import tabulate
 import pandas as pd
-import string
 import config
-import database
 
 
-class SwimRankingComms:
+class AthleteRanking:
+    """
+    """
+
+    def __init__(
+            self,
+            place: int,
+            name: str,
+            yob: int,
+            country: str,
+            team: str,
+            time: float,
+            fina: int,
+            points: float = 0) -> None:
+        self.place = place
+        self.name = name
+        self.yob = yob
+        self.country = country
+        self.team = team
+        self.time = time
+        self.fina = fina
+        self.points = points
+
+
+class EventRanking:
+    """
+    """
+
+    def __init__(self, name: str, gender: str, type: str) -> None:
+        self.name = name
+        self.gender = gender
+        self.type = type
+        self.athletes = []
+        self.points = {}
+
+    def get_points(self, teams_in_meet, points_system, relay_mult):
+        self.points = {team: 0 for team in teams_in_meet}
+        points_mult = 1
+        if self.type == "relay":
+            points_mult = relay_mult
+        for ath in self.athletes:
+            if ath.place in points_system:
+                if ath.team in self.points:
+                    ath.points = points_system[ath.place] * points_mult
+                    self.points[ath.team] += points_system[ath.place] * \
+                        points_mult
+                else:
+                    find_alias = ""
+                    for team in self.points.keys():
+                        if team in ath.team or ath.team in team:
+                            find_alias = team
+                    if find_alias:
+                        ath.points = points_system[ath.place] * points_mult
+                        self.points[find_alias] += points_system[ath.place] * \
+                            points_mult
+                        print(
+                            f"\033[33mWARNING: {find_alias} alias used from {ath.team}\033[00m")
+                    else:
+                        print(
+                            f"\033[31mWCAUTION: {ath.team} not found in teams in meet\033[00m")
+
+    def add_athlete(self, athlete: AthleteRanking):
+        self.athletes.append(athlete)
+
+
+def try_parsing_time(text):
+    for fmt in ('%M:%S.%f', '%S.%f'):
+        try:
+            t = datetime.strptime(text, fmt)
+            return t.second + \
+                t.minute*60 + t.microsecond/1000000
+        except ValueError:
+            pass
+    if text == "DSQ" or text == "NT" or text == "DNS":
+        return None
+    raise ValueError('no valid time format found')
+
+
+class Meet:
     """
     Get data from swinrankings.net using Beautifulsoup library
     """
 
-    def __init__(self, meet_id: str) -> None:
+    def __init__(self, meet_id: str, points_system: dict, relay_mult: int, gender: int) -> None:
         self.meet_id = meet_id
-        url = f"https://www.swimrankings.net/index.php?page=meetDetail&meetId={meet_id}&gender=1&styleId=0"
-
-    @staticmethod
-    def reformat_soup(soup) -> list:
-        """"""
-        result = []
-        translator = str.maketrans("", "", string.punctuation)
-
-        for item in soup.next_elements:
-            # print(item)
-            # print("\n")
-            # Remove leading spaces
-            if str(item)[0] == " ":
-                item = item[1:]
-            # Remove html tags
-            if str(item)[-8:] == "</table>":
-                break
-            if str(item)[0] == "<":
-                continue
-            if str(item)[:9] == "GENERATED":
-                break
-            # Remove punctuation
-            item = item.translate(translator)
-            # Add team name to list
-            result.append(item)
-        return result
+        self.points_system = points_system
+        self.relay_mult = relay_mult
+        self.gender = gender
+        self.events = {}
+        self.points = {}
 
     def get_team_names(self) -> list:
-        result = []
         # Meet home page
         page = requests.get(
             f"https://www.swimrankings.net/index.php?page=meetDetail&meetId={self.meet_id}&gender=1&styleId=0")
         # Scale website
         soup = BeautifulSoup(page.content, 'html.parser')
-        teams = soup.find("table").find(
-            class_="meetResult0").find(class_="club")
-        teams = self.reformat_soup(teams)
-        # Return team names
-        result = teams[::7]
-        return result
+        parse = soup.find("table", class_="meetSearch").find_all(
+            "td", class_="club")
+        teams = []
+        for line in parse:
+            team = line.find('a')
+            if team:
+                teams.append(team.text)
+        return teams
 
-    def get_team_points_by_event(self) -> dict:
-        rdm = round(random.uniform(1.50, 4.00), 2)
-        teams_in_meet = self.get_team_names()
-        result = {team: [0, 0, 0] for team in teams_in_meet}
-        for gender_id in range(1, 3):
-            print(f"gender: {config.gender[gender_id]}")
-            for event, id in config.swimming_event_id.items():
-                # if id != 15:
-                #     continue
-                if id > 20:
-                    points_mult = 2
+    def get_meet_results(self) -> dict:
+        meet_results = []
+        rdm = round(random.uniform(1.50, 3.50), 2)
+        gender = config.gender[self.gender]
+        print(f"Gender: {gender} \n")
+        # EVENT LOOP
+        for event, id in config.swimming_event_id.items():
+
+            if event in config.relay_events:
+                event_type = "relay"
+            else:
+                event_type = "individual"
+
+            # if id != 15 and id != 16:
+            #     continue
+
+            event_results = EventRanking(event, gender, event_type)
+            print(
+                f"\033[95m ***** Scraping Event: {gender}'s {event} ***** \033[00m")
+            sleep(rdm)
+            page = requests.get(
+                f"https://www.swimrankings.net/index.php?page=meetDetail&meetId={self.meet_id}&gender={self.gender}&styleId={id}")
+            soup = BeautifulSoup(page.content, 'html.parser')
+            event_rows = soup.find(
+                "table", class_="meetResult")
+            if not event_rows:
+                print(
+                    f"\033[33mWarning: Results for {gender}'s {event} not found\033[00m")
+                continue
+            event_rows = event_rows.find_all("tr")
+            # EVENT PLACES LOOP
+            for i in range(1, len(event_rows)):
+                data = event_rows[i].find_all("td")
+
+                if event_type == "individual":
+                    place = data[0].text
+                    name = data[1].text
+                    yob = int(data[2].text)
+                    country = data[3].text
+                    team = data[4].text
+                    time = data[5].text
+                    fina = data[6].text
                 else:
-                    points_mult = 1
-                print(f"id: {id} - {event}")
-                sleep(rdm)
-                page = requests.get(
-                    f"https://www.swimrankings.net/index.php?page=meetDetail&meetId={self.meet_id}&gender={gender_id}&styleId={id}")
-                soup = BeautifulSoup(page.content, 'html.parser')
-                event_results = soup.find("table").find(class_="meetResult0")
-                if event_results != None:
-                    event_results = self.reformat_soup(event_results)
+                    place = data[0].text
+                    team = data[1].text
+                    country = data[3].text
+                    name = data[4].text
+                    time = data[5].text
+                    fina = data[6].text
+                    yob = None
+
+                if (re.findall(r'\d+', place)):
+                    place = int((re.findall(r'\d+', place))[0])
                 else:
-                    continue
-                result_lines = zip(*(iter(event_results),) * 7)
-                if "Split" in event_results[::7]:
-                    # print("SPLIT")
-                    continue
-                if points_mult == 2:
-                    # print(event_results)
-                    result_lines = zip(*(iter(event_results),) * 12)
-                    team_index = 1
+                    place = None
+                time = try_parsing_time(time)
+
+                athlete = AthleteRanking(
+                    place,
+                    name,
+                    yob,
+                    country,
+                    team,
+                    time,
+                    fina,
+                )
+                event_results.add_athlete(athlete)
+            event_results.get_points(
+                teams_in_meet=self.get_team_names(),
+                points_system=self.points_system,
+                relay_mult=self.relay_mult)
+            for team in event_results.points.keys():
+                if team in self.points:
+                    self.points[team] += event_results.points[team]
                 else:
-                    result_lines = zip(*(iter(event_results),) * 7)
-                    team_index = 4
-                # print(teams_in_event)
-                for line in result_lines:
-                    # print(line)
-                    # print(line[team_index])
-                    if line[team_index] in teams_in_meet:
-                        try:
-                            int(line[0])
-                        except:
-                            pass
-                            # print(f"Cannot turn {line[0]} into int")
-                        else:
-                            if int(line[0]) in config.oua_points.keys():
-                                points = config.oua_points[int(line[0])]
-                                print(
-                                    f"Adding {points} points to {line[team_index]} for place {line[0]} and time {line[-2]}")
-                                result[line[team_index]][0] += (points_mult *
-                                                                points)
-                                result[line[team_index]][gender_id] += (points_mult *
-                                                                        points)
-                    else:
-                        pass
-                        # print("placing not in dict")
-        return result
+                    self.points[team] = event_results.points[team]
+            self.events[event_results.name] = event_results
+            meet_results.append(event_results)
+        return meet_results
 
+    # def get_team_points(self, meet_results, points_system):
+    #     teams_in_meet = self.get_team_names()
+    #     results = {team: 0 for team in teams_in_meet}
+    #     for event, event_result in meet_results.items():
+    #         points_mult = 1
+    #         if event in config.relay_events:
+    #             points_mult = 2
+    #         for athlete in event_result:
+    #             place = int(re.findall(r'\d+', athlete[0]))
+    #             if place in points_system:
+    #                 points = points_system[place] * points_mult
 
-# page = requests.get(
-#     "https://www.swimrankings.net/index.php?page=meetDetail&meetId=634465&gender=1&styleId=17")
-# soup = BeautifulSoup(page.content, 'html.parser')
-# result_header = soup.find(class_="meetResultHead")
-
-# event_name = result_header.find(class_="event").get_text()
-
-# results = []
-# line = {"place": "", "name": "", "team": ""}
-# translator = str.maketrans("", "", string.punctuation)
-
-# event0 = soup.find("table").find(class_="meetResult0")
-# iterator = 0
-# for element in event0.next_elements:
-#     if str(element)[0] == " ":
-#         element = element[1:]
-#     if str(element)[0] == "<":
-#         continue
-#     iterator += 1
-#     if str(element)[:9] == "GENERATED":
-#         break
-#     element = element.translate(translator)
-#     if iterator % 7 == 1:
-#         line["place"] = element
-#         # print(f"Rank = {element}")
-#     elif iterator % 7 == 2:
-#         line["name"] = element
-#         # print(f"Name = {element}")
-#     elif iterator % 7 == 5:
-#         line["team"] = element
-#         # print(f"Team = {element}")
-#     elif iterator % 7 == 0:
-#         results.append(line)
-#         # print(line)
-#         line = {"place": "", "name": "", "team": ""}
-#     else:
-#         continue
-
-# for result in results:
-#     pass
-    # print(result)
-
-    # event0 = soup.find_all(class_="meetResult0")
-    # print(len(event0))
-
-    # tags = {tag.name for tag in event0}
-
-    # print(len(tags))
-
-    # for tag in tags:
-    #     print(tag)
-
-    # for string in event0:
-    #     if contains("name", str(string)):
-    #         filtered_menu.append(string)
-
-    # print(filtered_menu[0])
-
-    # event_name = event0.find(class_="name").get_text()
-    # print(event_name)
-
-    # event0 = soup.find(class_="meetResult0")
-
-    # event_name = event0.find(class_="name").get_text()
-    # print(event_name)
 
 if __name__ == "__main__":
-    oua = SwimRankingComms(meet_id="629800")
-    divs = SwimRankingComms(meet_id="634465")
-    print(divs.get_team_names())
-    print(divs.get_team_points_by_event())
+    header = ["Place", "Name", "YOB", "Country",
+              "Team", "Time", "FINA", "Meet Points"]
+    oua = Meet(meet_id="629800", points_system=config.oua_points,
+               relay_mult=2, gender=1)
+    divs = Meet(meet_id="634465", points_system=config.oua_points,
+                relay_mult=2, gender=1)
+    usports = Meet(meet_id="636410",
+                   points_system=config.usports_points, relay_mult=1, gender=1)
+
+    with open("results.txt", 'w') as f:
+        results = usports.get_meet_results()
+        print(usports.points)
+        for event in results:
+            f.write(f"EVENT: {event.name}\n")
+            table = []
+            for athlete in event.athletes:
+                table.append(athlete.__dict__.values())
+            f.write(
+                f"{tabulate(table, header, 'simple_grid')}\n")
