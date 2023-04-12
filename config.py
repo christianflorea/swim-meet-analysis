@@ -76,7 +76,6 @@ oua_points = {
     16: 1
 }
 
-
 usports_points = {
     1: 32,
     2: 28,
