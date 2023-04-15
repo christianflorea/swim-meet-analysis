@@ -39,7 +39,7 @@ get the required data.
 usports = Meet(name="USports", year="2023", meet_id="636410", points_system=config.usports_points, relay_mult=1, gender=1)
 ```
 
-2. Choose the meet you want to diplay:
+2. Choose the meet you want to display:
 ```
 meet = oua2023
 
