@@ -1,21 +1,20 @@
 # Python Web Scrapper for Swimming Results
 
-## Descriptiopn
+## Description
 I developed this web scrapper with the goal to get insights on swim meet point 
 results. For those not familiar with swimming, championship swim meets generally 
 award points for each event, in decreasing order from 1st to whatever place is 
-determined to be the last points scoring place. All of the online results currently 
-avaiable only show the overall points scored for the whole meet. I wanted to be 
-able to dive deeper into the data and give a representation of points per swim 
-stroke, or even by individual event. 
+determined to be the last point's scoring place. All of the online results currently available only show the overall points scored for the whole meet. I 
+wanted to be able to dive deeper into the data and give a representation of 
+points per swim stroke, or even by individual event. 
 
-My first thought was to find an API from which I can fetch the results. 
+My first thought was to find an API from which I could fetch the results. 
 However, there were no open source APIs available, so I decided to use 
-swimrankings.net to get the results. By providing the meetID for the meet on 
-swim rankings, I was able to scrape the site to get the results for every event 
-in the meet using Beautifulsoup. I organized these results in json format and 
-cached them so they would not have to be fetched again. I then used Matplotlib 
-to plot the results in the following ways:
+swimrankings.net to get the data. By providing the meet id for the meet on 
+swimrankings.net, I was able to scrape the site to get the results for every 
+event in the meet using Beautifulsoup. I organized these results in json format 
+and cached them so they would not have to be fetched again. I then used 
+Matplotlib to plot the results in the following ways:
 - Overall points for the whole meet.
 - Points by stroke.
 - Points by event.
@@ -24,7 +23,7 @@ Some future improvements I would like to make, would be to allow for easier
 selection of meets and teams. Currently, the user must know the meet id and the
 exact team names if they are looking to filter teams. In addition to this, I 
 would like to improve my matplotlib skills and make displays that show even 
-more valuable information like athelete progress and other points breakdowns. Finally, I would like to add a UI to the project to make it easier to use and 
+more valuable information like athlete progress and other point breakdowns. Finally, I would like to add a UI to the project to make it easier to use and 
 get the required data. 
 
 
@@ -73,7 +72,7 @@ plot.plot_event_points(
     event="200 Fly", 
     results=meet_results["results"]["200 Fly"]["points"])
 ```
-## Gallary
+## Gallery
  ![Mens Stroke](./docs/images/Figure_1.png)
  ![Mens Overall](./docs/images/Figure_2.png)
  ![Mens Event](./docs/images/Figure_3.png)
