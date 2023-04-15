@@ -273,7 +273,6 @@ class Plotter:
                 ax.legend(loc='best', fontsize=10)
                 multiplier += 1
 
-            # Add some text for labels, title and custom x-axis tick labels, etc.
             ax.set_ylabel('Points')
             ax.set_xlabel('Teams')
             ax.set_title(f'{name} Points by Stroke')
@@ -281,7 +280,7 @@ class Plotter:
             plt.xticks(rotation=15)
 
             ax.legend(loc='upper left', ncols=3)
-            ax.set_ylim(0, 400)
+            ax.set_ylim(0, 600)
             plt.tight_layout()
             plt.show()
         except Exception as e:
@@ -301,7 +300,7 @@ class Plotter:
             ax.barh(list(points.keys()), list(points.values()))
             labels = ax.get_xticklabels()
             plt.setp(labels, rotation=45, horizontalalignment='right')
-            ax.set(xlim=[0, 1200], xlabel='Total Points', ylabel='Team',
+            ax.set(xlim=[0, 1400], xlabel='Total Points', ylabel='Team',
                 title=f'{name} Overall Team Points')
             plt.tight_layout()
             plt.show()
@@ -323,7 +322,7 @@ class Plotter:
             ax.barh(list(results.keys()), list(results.values()))
             labels = ax.get_xticklabels()
             plt.setp(labels, rotation=45, horizontalalignment='right')
-            ax.set(xlim=[0, 60], xlabel='Total Points', ylabel='Team',
+            ax.set(xlim=[0, 90], xlabel='Total Points', ylabel='Team',
                 title=f'{name} Team Points for {event}')
             plt.tight_layout()
             plt.show()
@@ -340,14 +339,13 @@ if __name__ == "__main__":
     oua2023 = Meet(name="OUA", year="2023", meet_id="636201", 
         points_system=config.oua_points,relay_mult=2, gender=1)    
     divs = Meet(name="Divisionals", year="2022", meet_id="634465", 
-        points_system=config.oua_points,relay_mult=2, gender=1)
+        points_system=config.oua_points,relay_mult=2, gender=2)
     usports = Meet(name="USports", year="2023", meet_id="636410",
         points_system=config.usports_points, relay_mult=1, gender=1)
 
-    meet = oua2023
+    meet = divs
+    
     meet_results = meet.get_meet_results()
-    divs.get_meet_results()
-    usports.get_meet_results()
     meet_name = meet.name
     meet_gender = config.gender[meet.gender]
     meet_year = meet.year
@@ -365,4 +363,7 @@ if __name__ == "__main__":
             'McMaster University'
         ])
     plot.plot_meet_points(name=meet_title, points=meet_results["points"])
-    plot.plot_event_points(name=meet_title, event="200 Fly", results=meet_results["results"]["200 Fly"]["points"])
+    plot.plot_event_points(
+        name=meet_title, 
+        event="50 Free", 
+        results=meet_results["results"]["50 Free"]["points"])
