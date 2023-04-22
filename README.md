@@ -1,7 +1,7 @@
-# Python Web Scrapper for Swimming Results
+# Python Web Scraper for Swimming Results
 
 ## Description
-I developed this web scrapper with the goal to get insights on swim meet point 
+I developed this web scraper with the goal to get insights on swim meet point 
 results. For those not familiar with swimming, championship swim meets generally 
 award points for each event, in decreasing order from 1st to whatever place is 
 determined to be the last point's scoring place. All of the online results currently available only show the overall points scored for the whole meet. I 

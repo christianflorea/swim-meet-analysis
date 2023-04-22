@@ -365,5 +365,5 @@ if __name__ == "__main__":
     plot.plot_meet_points(name=meet_title, points=meet_results["points"])
     plot.plot_event_points(
         name=meet_title, 
-        event="50 Free", 
+        event="50", 
         results=meet_results["results"]["50 Free"]["points"])
